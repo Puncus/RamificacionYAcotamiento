@@ -44,7 +44,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>70</y>
+      <y>80</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -52,12 +52,15 @@
     <property name="text">
      <string>Entero</string>
     </property>
+    <attribute name="buttonGroup">
+     <string notr="true">tipo_button_group</string>
+    </attribute>
    </widget>
    <widget class="QRadioButton" name="tipo_mixto">
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>70</y>
+      <y>80</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -65,12 +68,15 @@
     <property name="text">
      <string>Mixto</string>
     </property>
+    <attribute name="buttonGroup">
+     <string notr="true">tipo_button_group</string>
+    </attribute>
    </widget>
    <widget class="QRadioButton" name="tipo_binario">
     <property name="geometry">
      <rect>
       <x>130</x>
-      <y>70</y>
+      <y>80</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -78,12 +84,15 @@
     <property name="text">
      <string>Binario</string>
     </property>
+    <attribute name="buttonGroup">
+     <string notr="true">tipo_button_group</string>
+    </attribute>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>50</y>
+      <y>60</y>
       <width>131</width>
       <height>16</height>
      </rect>
@@ -99,7 +108,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>100</y>
+      <y>110</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -115,7 +124,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>240</y>
+      <y>250</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -128,7 +137,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>120</y>
+      <y>130</y>
       <width>160</width>
       <height>22</height>
      </rect>
@@ -147,7 +156,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>260</y>
+      <y>270</y>
       <width>160</width>
       <height>22</height>
      </rect>
@@ -166,7 +175,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>120</y>
+      <y>130</y>
       <width>47</width>
       <height>13</height>
      </rect>
@@ -179,7 +188,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>260</y>
+      <y>270</y>
       <width>47</width>
       <height>13</height>
      </rect>
@@ -192,7 +201,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>150</y>
+      <y>160</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -205,7 +214,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>170</y>
+      <y>180</y>
       <width>1261</width>
       <height>61</height>
      </rect>
@@ -223,7 +232,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>310</y>
+      <y>320</y>
       <width>1261</width>
       <height>321</height>
      </rect>
@@ -241,7 +250,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>290</y>
+      <y>300</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -254,7 +263,7 @@
     <property name="geometry">
      <rect>
       <x>560</x>
-      <y>30</y>
+      <y>0</y>
       <width>161</width>
       <height>16</height>
      </rect>
@@ -273,13 +282,64 @@
     <property name="geometry">
      <rect>
       <x>600</x>
-      <y>640</y>
+      <y>650</y>
       <width>75</width>
       <height>23</height>
      </rect>
     </property>
     <property name="text">
      <string>Resolver</string>
+    </property>
+    <property name="checkable">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QRadioButton" name="modo_maximizar">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>80</y>
+      <width>82</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Maximizar</string>
+    </property>
+    <attribute name="buttonGroup">
+     <string notr="true">modo_button_group</string>
+    </attribute>
+   </widget>
+   <widget class="QRadioButton" name="modo_minimizar">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>80</y>
+      <width>82</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Minimizar</string>
+    </property>
+    <attribute name="buttonGroup">
+     <string notr="true">modo_button_group</string>
+    </attribute>
+   </widget>
+   <widget class="QLabel" name="label_6">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>60</y>
+      <width>131</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Modo</string>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
@@ -321,4 +381,8 @@
  </widget>
  <resources/>
  <connections/>
+ <buttongroups>
+  <buttongroup name="tipo_button_group"/>
+  <buttongroup name="modo_button_group"/>
+ </buttongroups>
 </ui>

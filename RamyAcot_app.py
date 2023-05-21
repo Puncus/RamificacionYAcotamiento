@@ -1,9 +1,10 @@
 from PyQt5 import uic
 from utilities import gen_labels
-from PyQt5.QtCore import QSize, Qt
+from PyQt5.QtCore import QSize, Qt, QRect
 from PyQt5.QtWidgets import (
     QApplication,
     QLabel,
+    QLineEdit,
     QMainWindow,
     QTableWidgetItem
 )
@@ -29,12 +30,26 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
         uic.loadUi("app.ui", self)
+        self.labels_valor_restricciones = ["Tipo", "Valor"]
+        self.modo:str | None = None
+        self.tipo:str | None = None
+
+        # Conexiones para los eventos de los botones
         self.numero_variables_slider.valueChanged.connect(self.valor_variables)
         self.numero_restricciones_slider.valueChanged.connect(self.valor_restricciones)
         self.nuevo_planteamiento_action.triggered.connect(self.clear)
         self.ejemplo_action.triggered.connect(self.mostrar_ejemplo)
-        self.labels_valor_restricciones = ["Tipo", "Valor"]
+        self.tipo_button_group.buttonClicked.connect(self.tipo_button_pressed)
+        self.modo_button_group.buttonClicked.connect(self.modo_button_pressed)
         self.resolver_boton.clicked.connect(self.solve)
+
+        
+    def tipo_button_pressed(self, button):
+        self.tipo = button.text()    
+
+
+    def modo_button_pressed(self, button):
+        self.modo = button.text()
 
 
     def valor_variables(self):
@@ -52,8 +67,11 @@ class MainWindow(QMainWindow):
         self.valor_slider_restricciones.setText(f"{valor}")
         self.restricciones_tabla.setRowCount(valor)
     
+
     def mostrar_ejemplo(self):
         # self.variables_line.setText("[3.0, 1.0, 3.0]")
+        self.tipo = "Entero"
+        self.modo = "Maximizar"
         self.tipo_entero.setChecked(True)
         self.numero_variables_slider.setValue(3)
         self.numero_restricciones_slider.setValue(3)
@@ -68,6 +86,7 @@ class MainWindow(QMainWindow):
             for column in range(len(restricciones_ejemplo[0])):
                 self.restricciones_tabla.setItem(row, column, QTableWidgetItem(f"{restricciones_ejemplo[row][column]}"))
 
+
     def clear(self):
         self.tipo_entero.setChecked(False)
         self.tipo_mixto.setChecked(False)
@@ -79,9 +98,21 @@ class MainWindow(QMainWindow):
         self.variables_tabla.clear()
         self.restricciones_tabla.clear()
     
-    def get_table_data(self):
+
+    def get_variables_from_tabla(self):
+        data = []
+        for column in range(self.variables_tabla.columnCount()):
+            item = self.restricciones_tabla.item(0, column)
+            if item is not None:
+                data.append(float(item.text()))
+            else:
+                data.append(0.0)
+        return data
+
+
+    def get_restricciones_from_tabla(self):
         restricciones = ["=", "<=", ">="]
-        self.data = []
+        table_data = []
         for row in range(self.restricciones_tabla.rowCount()):
             row_data = []
             for column in range(self.restricciones_tabla.columnCount()):
@@ -93,11 +124,21 @@ class MainWindow(QMainWindow):
                         row_data.append(float(item))
                 else:
                     row_data.append(0.0)
-            self.data.append(row_data)
-        print(self.data)
+            table_data.append(row_data)
+        return table_data
+
 
     def solve(self):
-        self.get_table_data()
+        print(self.tipo)
+        print(self.modo)
+        try:
+            funcion_objetivo = self.get_variables_from_tabla()
+            restricciones = self.get_restricciones_from_tabla()
+        except AttributeErrorr:
+            print("Tried to solve with no restrictions")
+            return
+        print(funcion_objetivo)
+        print(restricciones)
 
 
 # You need one (and only one) QApplication instance per application.
