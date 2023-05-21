@@ -6,9 +6,21 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1080</width>
+    <width>1280</width>
     <height>720</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1280</width>
+    <height>720</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1280</width>
+    <height>720</height>
+   </size>
   </property>
   <property name="font">
    <font>
@@ -28,11 +40,11 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QRadioButton" name="tipo_Entero">
+   <widget class="QRadioButton" name="tipo_entero">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>30</y>
+      <y>70</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -45,7 +57,7 @@
     <property name="geometry">
      <rect>
       <x>70</x>
-      <y>30</y>
+      <y>70</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -58,7 +70,7 @@
     <property name="geometry">
      <rect>
       <x>130</x>
-      <y>30</y>
+      <y>70</y>
       <width>82</width>
       <height>17</height>
      </rect>
@@ -71,7 +83,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>10</y>
+      <y>50</y>
       <width>131</width>
       <height>16</height>
      </rect>
@@ -79,12 +91,15 @@
     <property name="text">
      <string>Tipo de Planteamiento</string>
     </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QLabel" name="label_2">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>60</y>
+      <y>100</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -92,12 +107,15 @@
     <property name="text">
      <string>Número de variables (Máx 10.)</string>
     </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
    </widget>
    <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>120</y>
+      <y>240</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -110,7 +128,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>80</y>
+      <y>120</y>
       <width>160</width>
       <height>22</height>
      </rect>
@@ -129,7 +147,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>140</y>
+      <y>260</y>
       <width>160</width>
       <height>22</height>
      </rect>
@@ -148,7 +166,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>80</y>
+      <y>120</y>
       <width>47</width>
       <height>13</height>
      </rect>
@@ -161,7 +179,7 @@
     <property name="geometry">
      <rect>
       <x>180</x>
-      <y>140</y>
+      <y>260</y>
       <width>47</width>
       <height>13</height>
      </rect>
@@ -170,21 +188,11 @@
      <string>.</string>
     </property>
    </widget>
-   <widget class="QLineEdit" name="variables_line">
-    <property name="geometry">
-     <rect>
-      <x>200</x>
-      <y>80</y>
-      <width>451</width>
-      <height>20</height>
-     </rect>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_4">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>60</y>
+      <x>10</x>
+      <y>150</y>
       <width>171</width>
       <height>16</height>
      </rect>
@@ -193,13 +201,94 @@
      <string>Variables</string>
     </property>
    </widget>
+   <widget class="QTableWidget" name="variables_tabla">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>170</y>
+      <width>1261</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="rowCount">
+     <number>1</number>
+    </property>
+    <property name="columnCount">
+     <number>1</number>
+    </property>
+    <row/>
+    <column/>
+   </widget>
+   <widget class="QTableWidget" name="restricciones_tabla">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>310</y>
+      <width>1261</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <property name="rowCount">
+     <number>1</number>
+    </property>
+    <property name="columnCount">
+     <number>1</number>
+    </property>
+    <row/>
+    <column/>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>290</y>
+      <width>171</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Restricciones</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="Ttulo">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>30</y>
+      <width>161</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ramificación y Acotamiento</string>
+    </property>
+    <property name="scaledContents">
+     <bool>true</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="resolver_boton">
+    <property name="geometry">
+     <rect>
+      <x>600</x>
+      <y>640</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Resolver</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menu">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1080</width>
+     <width>1280</width>
      <height>21</height>
     </rect>
    </property>
@@ -208,9 +297,15 @@
      <string>Archivo</string>
     </property>
     <addaction name="nuevo_planteamiento_action"/>
+   </widget>
+   <widget class="QMenu" name="menuMostrar_Ejemplo">
+    <property name="title">
+     <string>Mostrar Ejemplo</string>
+    </property>
     <addaction name="ejemplo_action"/>
    </widget>
    <addaction name="menuArchivo"/>
+   <addaction name="menuMostrar_Ejemplo"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="nuevo_planteamiento_action">

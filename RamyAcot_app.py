@@ -1,20 +1,11 @@
 from PyQt5 import uic
+from utilities import gen_labels
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtWidgets import (
     QApplication,
-    QCheckBox,
-    QComboBox,
-    QFontComboBox,
     QLabel,
-    QLineEdit,
     QMainWindow,
-    QProgressBar,
-    QPushButton,
-    QRadioButton,
-    QSpinBox,
-    QTimeEdit,
-    QVBoxLayout,
-    QWidget
+    QTableWidgetItem
 )
 from PyQt5.QtGui import QPixmap
 
@@ -40,48 +31,79 @@ class MainWindow(QMainWindow):
         uic.loadUi("app.ui", self)
         self.numero_variables_slider.valueChanged.connect(self.valor_variables)
         self.numero_restricciones_slider.valueChanged.connect(self.valor_restricciones)
+        self.nuevo_planteamiento_action.triggered.connect(self.clear)
         self.ejemplo_action.triggered.connect(self.mostrar_ejemplo)
-        
-        
-        # self.setWindowTitle("Ramificación y Acotamiento")
-        # self.setFixedSize(QSize(1920, 1080))
-        # self.layout = QVBoxLayout()
-        # self.layout.addWidget(QLabel("Tipo de Problema"))
+        self.labels_valor_restricciones = ["Tipo", "Valor"]
+        self.resolver_boton.clicked.connect(self.solve)
 
-    
-        # widgets = [
-        #     QRadioButton,
-        #     QRadioButton,
-        #     QRadioButton
-        # ]
 
-        # for w in widgets:
-        #     if w == QRadioButton:
-        #         self.layout.addWidget(w("coso"))
-                
-        #     else:
-        #         self.layout.addWidget(w())
-
-        # widget = QWidget()
-        # widget.setLayout(self.layout)
-        # Set the central widget of the Window. Widget will expand
-        # to take up all the space in the window by default.
-        # self.setCentralWidget(widget)
     def valor_variables(self):
-            valor = self.numero_variables_slider.value()
-            self.valor_slider_variables.setText(f"{valor}")
+        valor = self.numero_variables_slider.value()
+        self.valor_slider_variables.setText(f"{valor}")
+        self.variables_tabla.setColumnCount(valor)
+        self.restricciones_tabla.setColumnCount(valor + 2)
+        new_labels = gen_labels(valor)
+        self.variables_tabla.setHorizontalHeaderLabels(new_labels)
+        self.restricciones_tabla.setHorizontalHeaderLabels(new_labels + self.labels_valor_restricciones)
+            
 
     def valor_restricciones(self):
-            valor = self.numero_restricciones_slider.value()
-            self.valor_slider_restricciones.setText(f"{valor}")
+        valor = self.numero_restricciones_slider.value()
+        self.valor_slider_restricciones.setText(f"{valor}")
+        self.restricciones_tabla.setRowCount(valor)
     
     def mostrar_ejemplo(self):
-         self.variables_line.setText("[3.0, 1.0, 3.0]")
+        # self.variables_line.setText("[3.0, 1.0, 3.0]")
+        self.tipo_entero.setChecked(True)
+        self.numero_variables_slider.setValue(3)
+        self.numero_restricciones_slider.setValue(3)
+        funcion_objetivo_ejemplo = [3.0, 1.0, 3.0]
+
+        restricciones_ejemplo = [[-1.0, 2.0, 1.0, "<=", 4.0],
+                                [0.0, 4.0, -3.0, "<=", 2.0],
+                                [1.0, -3.0, 2.0, "<=", 3.0]]
+        for column in range(len(funcion_objetivo_ejemplo)):
+            self.variables_tabla.setItem(0, column, QTableWidgetItem(f"{funcion_objetivo_ejemplo[column]}"))
+        for row in range(len(restricciones_ejemplo)):
+            for column in range(len(restricciones_ejemplo[0])):
+                self.restricciones_tabla.setItem(row, column, QTableWidgetItem(f"{restricciones_ejemplo[row][column]}"))
+
+    def clear(self):
+        self.tipo_entero.setChecked(False)
+        self.tipo_mixto.setChecked(False)
+        self.tipo_binario.setChecked(False)
+        self.numero_variables_slider.setValue(2)
+        self.numero_restricciones_slider.setValue(1)
+        self.restricciones_tabla.setRowCount(self.numero_restricciones_slider.value())
+        self.restricciones_tabla.setColumnCount(self.numero_restricciones_slider.value())
+        self.variables_tabla.clear()
+        self.restricciones_tabla.clear()
+    
+    def get_table_data(self):
+        restricciones = ["=", "<=", ">="]
+        self.data = []
+        for row in range(self.restricciones_tabla.rowCount()):
+            row_data = []
+            for column in range(self.restricciones_tabla.columnCount()):
+                item = self.restricciones_tabla.item(row, column).text()
+                if item is not None:
+                    if item in restricciones: 
+                        row_data.append(item)    
+                    else:
+                        row_data.append(float(item))
+                else:
+                    row_data.append(0.0)
+            self.data.append(row_data)
+        print(self.data)
+
+    def solve(self):
+        self.get_table_data()
 
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
 # If you know you won't use command line arguments QApplication([]) works too.
+
 app = QApplication([])
 app.setStyle('Fusion')
 # Create a Qt widget, which will be our window.
