@@ -1,17 +1,21 @@
 from PyQt5 import uic
-from utilities import gen_labels
+from utilities import gen_labels, Nodo, Arbol
 from PyQt5.QtCore import QSize, Qt, QRect
 from PyQt5.QtWidgets import (
     QApplication,
     QLabel,
     QLineEdit,
     QMainWindow,
-    QTableWidgetItem
+    QTableWidgetItem,
+    QMessageBox
 )
 from PyQt5.QtGui import QPixmap
-
 from screeninfo import get_monitors
+from numpy import array, concatenate
 
+
+MAXIMIZAR = "Maximizar"
+MINIMIZAR = "Minimizar"
 MAIN_MONITOR = None
 
 for monitor in get_monitors():
@@ -73,6 +77,7 @@ class MainWindow(QMainWindow):
         self.tipo = "Entero"
         self.modo = "Maximizar"
         self.tipo_entero.setChecked(True)
+        self.modo_maximizar.setChecked(True)
         self.numero_variables_slider.setValue(3)
         self.numero_restricciones_slider.setValue(3)
         funcion_objetivo_ejemplo = [3.0, 1.0, 3.0]
@@ -99,46 +104,96 @@ class MainWindow(QMainWindow):
         self.restricciones_tabla.clear()
     
 
-    def get_variables_from_tabla(self):
+    def get_variables_from_tabla(self) -> list or None:
         data = []
         for column in range(self.variables_tabla.columnCount()):
-            item = self.restricciones_tabla.item(0, column)
+            if self.variables_tabla.columnCount() == 1:
+                return None
+            item = self.variables_tabla.item(0, column)
             if item is not None:
-                data.append(float(item.text()))
+                try:
+                    data.append(float(item.text()))
+                except ValueError:
+                    popup = QMessageBox()
+                    popup.setWindowTitle("Valores no aceptados")
+                    popup.setText("Por favor ingresa valores válidos en las celdas.")
+                    popup.setIcon(QMessageBox.Critical)
+                    _ = popup.exec_()
+                    return None
             else:
                 data.append(0.0)
-        return data
+        return array(data)
 
 
-    def get_restricciones_from_tabla(self):
-        restricciones = ["=", "<=", ">="]
+    def get_restricciones_from_tabla(self) -> tuple or None:
         table_data = []
+
         for row in range(self.restricciones_tabla.rowCount()):
             row_data = []
+            if self.restricciones_tabla.columnCount() == 1:
+                return None
+            
             for column in range(self.restricciones_tabla.columnCount()):
                 item = self.restricciones_tabla.item(row, column).text()
                 if item is not None:
-                    if item in restricciones: 
+                    if item in (["=", "<=", ">="]): 
                         row_data.append(item)    
                     else:
-                        row_data.append(float(item))
+                        try:
+                            row_data.append(float(item))
+                        except ValueError:
+                            print(f"{item} causó el error en {row}, {column}")
+                            popup = QMessageBox()
+                            popup.setWindowTitle("Valores no aceptados")
+                            popup.setText("Por favor ingresa valores válidos en las celdas.")
+                            popup.setIcon(QMessageBox.Critical)
+                            error = popup.exec_()
+                            return None
                 else:
                     row_data.append(0.0)
             table_data.append(row_data)
-        return table_data
+
+        desigualdad_valores = []
+        desigualdad_objetivos = []
+        igualdad_valores = []
+        igualdad_objetivos = []
+        for row in table_data:
+            if row[-2] == "=":
+                igualdad_valores.append(row[:-2])
+                igualdad_objetivos.append(row[-1])
+            elif row[-2] == ">=":
+                desigualdad_valores.append([value * -1 for value in row[:-2]])
+                desigualdad_objetivos.append(row[-1] * -1)
+            elif row[-2] == "<=":
+                desigualdad_valores.append(row[:-2])
+                desigualdad_objetivos.append(row[-1])
+                
+        restricciones = {"desigualdades":array(desigualdad_valores),
+                            "objetivo_desigualdades": array(desigualdad_objetivos),
+                            "igualdades": array(igualdad_valores),
+                            "objetivo_igualdades": array(igualdad_objetivos)}
+        return restricciones
 
 
     def solve(self):
-        print(self.tipo)
-        print(self.modo)
-        try:
-            funcion_objetivo = self.get_variables_from_tabla()
-            restricciones = self.get_restricciones_from_tabla()
-        except AttributeErrorr:
-            print("Tried to solve with no restrictions")
-            return
-        print(funcion_objetivo)
-        print(restricciones)
+        # print(self.tipo)
+        # print(self.modo)
+
+        funcion_objetivo = self.get_variables_from_tabla()
+        if self.modo == MAXIMIZAR:
+            funcion_objetivo *= -1
+
+        restricciones = self.get_restricciones_from_tabla()
+        if self.tipo == "Binario":
+            numero_variables = len(funcion_objetivo)
+            for i in range(numero_variables):
+                temp = [0.0] * numero_variables
+                temp[i] = 1.0
+                restricciones["desigualdades"] = concatenate((restricciones["desigualdades"], array([temp])), axis=0)
+                restricciones["objetivo_desigualdades"] = concatenate((restricciones["objetivo_desigualdades"], array([1.0])), axis=0)
+
+        arbol_ramificacion = Arbol(Nodo(funcion_objetivo , restricciones, self.modo))
+        arbol_ramificacion.representar()
 
 
 # You need one (and only one) QApplication instance per application.

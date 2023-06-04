@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Tuple
 import numpy as np
+from queue import Queue
 from scipy.optimize import linprog, OptimizeResult
 from dsplot.tree import BinaryTree
 
@@ -21,19 +22,20 @@ def subscript(number):
 
     return ''.join(subscript_map[digit] for digit in str(number))
 
+
 def gen_labels(amount):
     labels = []
     for i in range(amount):
         labels.append(f"x{subscript(f'{i+1}')}")
     return labels
 
+
+# Clase que implementa los problemas de ramificación y acotamiento 
 class Planteamiento:
     def __init__(self, funcion_objetivo: List, restricciones_desigualdad: List, restricciones_igualdad: List = [], 
-                 modo = "Maximizar", tipo="entero", variables_enteras: List= [], variables_continuas: List = []):
+                 modo = "Maximizar", tipo="Entero", variables_enteras: List= [], variables_continuas: List = []):
         if tipo not in ["Entero", "Mixto", "Binario"]:
             raise Exception(f"{modo} No es un tipo de problema valido.")
-        self.no_enteras_label.setVisible(False)
-        self.no_enteras_line.setVisible(False)
         self.modo = "Minimizar"
         self.tipo = tipo
         self.funcion_objetivo = np.array(funcion_objetivo)
@@ -76,7 +78,7 @@ class Planteamiento:
             for i, x in enumerate(self.funcion_objetivo, start=1):
                 modelo += f"{x}x{subscript(i)}"
                 try:
-                    if x >= 0:
+                    if self.funcion_objetivo[i] >= 0:
                         modelo += "+"
                 except IndexError:
                     continue
@@ -85,7 +87,7 @@ class Planteamiento:
             for i, x in enumerate(self.funcion_objetivo, start=1):
                 modelo += f"{-x}x{subscript(i)}"
                 try:
-                    if x >= 0:
+                    if self.funcion_objetivo[i] >= 0:
                         modelo += "+"
                 except IndexError:
                     continue
@@ -129,3 +131,104 @@ class Planteamiento:
                                      A_eq=self.restricciones_igualdad, b_eq=self.valor_restricciones_igualdad)
         else:
             self.solucion = linprog(self.funcion_objetivo, A_ub=self.restricciones_desigualdad, b_ub=self.valor_restricciones_desigualdad)
+
+
+def is_approx_integer(float_number, tolerance=1e-6):
+    absolute_difference = abs(float_number - round(float_number))
+    return absolute_difference < tolerance
+
+
+class Nodo:
+    def __init__(self, funcion_objetivo, restricciones:dict, modo) -> None:
+        self.right: Nodo or None = None
+        self.left: Nodo or None = None
+        self.restricciones: dict = restricciones
+        self.ramificado = False
+        self.modo = modo
+        if len(self.restricciones["igualdades"]) > 0:
+            self.solucion: OptimizeResult = linprog(funcion_objetivo,
+                                                    A_ub=self.restricciones["desigualdades"],
+                                                    b_ub=self.restricciones["objetivo_desigualdades"],
+                                                    A_eq=self.restricciones["igualdades"],
+                                                    b_eq=self.restricciones["objetivo_igualdades"])
+        else:
+            self.solucion: OptimizeResult = linprog(funcion_objetivo,
+                                                    A_ub=self.restricciones["desigualdades"],
+                                                    b_ub=self.restricciones["objetivo_desigualdades"])
+
+    def __str__(self) -> str:
+        resultado = f"Variables: \n"
+        for index, variable in enumerate(self.solucion.x, start=1):
+            if is_approx_integer(variable, tolerance=1e-8):
+                resultado += f"x{subscript(f'{index}')} = {int(variable)}\n"
+            else:
+                resultado += f"x{subscript(f'{index}')} = {variable}\n"
+        if self.modo == "Maximizar":
+            resultado += f"\nZ: {abs(self.solucion.fun)}"
+        else:
+            resultado += f"\nZ: {self.solucion.fun}"
+        return resultado
+
+
+class Arbol:
+    def __init__(self, raiz: Nodo) -> None:
+        self.raiz = raiz
+        print(raiz)
+
+    def validar_restricciones(self, nodo: Nodo) -> Tuple[bool, str]:
+        if nodo.problema.tipo == "Entero":
+            for variable in nodo.problema.solucion.x:
+                if is_approx_integer(variable):
+                    continue
+                else:
+                    return False, "aún hay reales en la solución"
+            return True, "Solución factible"
+    def ramificar(self, nodo):
+        valor = self.validar_restricciones(nodo)
+        print(valor[1])
+
+    def recorrer(self):
+        cola_nodos: Queue = Queue()
+        orden_nodos = []
+
+        if self.raiz is not None:
+            orden_nodos.append(self.raiz)
+            cola_nodos.put(self.raiz)
+
+        while not cola_nodos.empty():
+            nodo_actual: Nodo = cola_nodos.get()
+
+            if nodo_actual.right is not None:
+                orden_nodos.append(nodo_actual.right)
+                cola_nodos.put(nodo_actual.right)
+
+            else:
+                orden_nodos.append(None)
+
+            if nodo_actual.left is not None:
+                cola_nodos.put(nodo_actual.left)
+                orden_nodos.append(nodo_actual.left)
+
+            else:
+                orden_nodos.append(None)
+        
+        return orden_nodos
+
+
+    def representar(self):
+        nodos: List[Nodo] = self.recorrer()
+        representacion = []
+        for nodo in nodos:
+            if nodo is not None:
+                representacion.append(f"{nodo}")
+            else:
+                representacion.append("None")
+        
+        for item in representacion:
+            print(f"{item}: {type(item)}")
+
+        image_representation = BinaryTree(nodes=representacion)
+        image_representation.plot(orientation="LR", shape="circle", fill_color="#346eeb")
+        from PIL import Image
+        img = Image.open(f"tree.png")
+        img.show()
