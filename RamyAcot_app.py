@@ -7,7 +7,8 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QTableWidgetItem,
-    QMessageBox
+    QMessageBox, 
+    QInputDialog
 )
 from PyQt5.QtGui import QPixmap
 from screeninfo import get_monitors
@@ -122,36 +123,67 @@ class MainWindow(QMainWindow):
                     return None
             else:
                 data.append(0.0)
-        return array(data)
+        if self.modo == MAXIMIZAR:
+            return array(data) * -1
+        else:
+            return array(data)
 
 
     def get_restricciones_from_tabla(self) -> tuple or None:
-        table_data = []
 
-        for row in range(self.restricciones_tabla.rowCount()):
-            row_data = []
-            if self.restricciones_tabla.columnCount() == 1:
-                return None
-            
-            for column in range(self.restricciones_tabla.columnCount()):
-                item = self.restricciones_tabla.item(row, column).text()
-                if item is not None:
-                    if item in (["=", "<=", ">="]): 
-                        row_data.append(item)    
+        def error_popup():
+            popup = QMessageBox()
+            popup.setWindowTitle("Valores no aceptados")
+            popup.setText("Por favor ingresa valores válidos en las celdas.")
+            popup.setIcon(QMessageBox.Critical)
+            error = popup.exec_()
+        
+        def show_input_dialog(largo_funcion_objetivo):
+            ok = False
+            variables_continuas = None
+            while not ok:
+                text, ok = QInputDialog.getText(self, "Variables Continuas", "Ingresa las variables continuas separadas por comas: ej: 1,2,3")
+                if ok:
+                    if text == "":
+                        ok = False
                     else:
                         try:
-                            row_data.append(float(item))
+                            variables_continuas = [int(digito) - 1 for digito in text.split(",")]
+                            for variable in variables_continuas:
+                                if (variable > largo_funcion_objetivo - 1) or variable < 0:
+                                    ok = False
+                                    break
                         except ValueError:
-                            print(f"{item} causó el error en {row}, {column}")
-                            popup = QMessageBox()
-                            popup.setWindowTitle("Valores no aceptados")
-                            popup.setText("Por favor ingresa valores válidos en las celdas.")
-                            popup.setIcon(QMessageBox.Critical)
-                            error = popup.exec_()
-                            return None
-                else:
-                    row_data.append(0.0)
-            table_data.append(row_data)
+                            ok = False
+                        print("Variables continuas:", variables_continuas)
+            return variables_continuas
+
+        var_cont = None
+        table_data = []
+        try:
+
+            for row in range(self.restricciones_tabla.rowCount()):
+                row_data = []
+                if self.restricciones_tabla.columnCount() == 1:
+                    return None
+                
+                for column in range(self.restricciones_tabla.columnCount()):
+                    item = self.restricciones_tabla.item(row, column).text()
+                    if item is not None:
+                        if item in (["=", "<=", ">="]): 
+                            row_data.append(item)
+                        else:
+                            try:
+                                row_data.append(float(item))
+                            except ValueError:
+                                print(f"{item} causó el error en {row}, {column}")
+                                error_popup()
+                                return None
+                    else:
+                        row_data.append(0.0)
+                table_data.append(row_data)
+        except AttributeError:
+            return None
 
         desigualdad_valores = []
         desigualdad_objetivos = []
@@ -167,23 +199,31 @@ class MainWindow(QMainWindow):
             elif row[-2] == "<=":
                 desigualdad_valores.append(row[:-2])
                 desigualdad_objetivos.append(row[-1])
-                
+        
         restricciones = {"desigualdades":array(desigualdad_valores),
                             "objetivo_desigualdades": array(desigualdad_objetivos),
                             "igualdades": array(igualdad_valores),
                             "objetivo_igualdades": array(igualdad_objetivos)}
-        return restricciones
+    
+        # Pedir las variables continuas
+        if self.tipo == "Mixto":
+            var_cont = show_input_dialog(self.variables_tabla.columnCount())
+        return restricciones, var_cont
 
+    
+    
 
     def solve(self):
         # print(self.tipo)
         # print(self.modo)
 
         funcion_objetivo = self.get_variables_from_tabla()
-        if self.modo == MAXIMIZAR:
-            funcion_objetivo *= -1
+        
+        print(funcion_objetivo)
 
-        restricciones = self.get_restricciones_from_tabla()
+        restricciones, variables_continuas = self.get_restricciones_from_tabla()
+        if restricciones is None:
+            return
         if self.tipo == "Binario":
             numero_variables = len(funcion_objetivo)
             for i in range(numero_variables):
@@ -192,8 +232,15 @@ class MainWindow(QMainWindow):
                 restricciones["desigualdades"] = concatenate((restricciones["desigualdades"], array([temp])), axis=0)
                 restricciones["objetivo_desigualdades"] = concatenate((restricciones["objetivo_desigualdades"], array([1.0])), axis=0)
 
-        arbol_ramificacion = Arbol(Nodo(funcion_objetivo , restricciones, self.modo))
-        arbol_ramificacion.representar()
+        if self.tipo == "Mixto": 
+            print(f"si debería mandar {variables_continuas}")
+            arbol_ramificacion = Arbol(Nodo(funcion_objetivo , restricciones, self.modo, self.tipo, variables_continuas))
+        else: 
+            arbol_ramificacion = Arbol(Nodo(funcion_objetivo , restricciones, self.modo, self.tipo))
+        
+        solucion = arbol_ramificacion.recorrer_2()
+        solucion.show(line_type="ascii-em")
+        # arbol_ramificacion.representar()
 
 
 # You need one (and only one) QApplication instance per application.
