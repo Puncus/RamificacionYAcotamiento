@@ -36,8 +36,10 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         uic.loadUi("app.ui", self)
         self.labels_valor_restricciones = ["Tipo", "Valor"]
-        self.modo:str | None = None
-        self.tipo:str | None = None
+        self.tipo = "Entero"
+        self.modo = "Maximizar"
+        self.tipo_entero.setChecked(True)
+        self.modo_maximizar.setChecked(True)
 
         # Conexiones para los eventos de los botones
         self.numero_variables_slider.valueChanged.connect(self.valor_variables)
@@ -181,6 +183,9 @@ class MainWindow(QMainWindow):
                                 return None
                     else:
                         row_data.append(0.0)
+                if not isinstance(row_data[-2], str):
+                    error_popup()
+                    return None
                 table_data.append(row_data)
         except AttributeError:
             return None
@@ -216,13 +221,12 @@ class MainWindow(QMainWindow):
     def solve(self):
         # print(self.tipo)
         # print(self.modo)
-
-        funcion_objetivo = self.get_variables_from_tabla()
-        
-        print(funcion_objetivo)
-
-        restricciones, variables_continuas = self.get_restricciones_from_tabla()
-        if restricciones is None:
+        try:
+            funcion_objetivo = self.get_variables_from_tabla()
+            restricciones, variables_continuas = self.get_restricciones_from_tabla()
+        except TypeError:
+            return
+        if restricciones is None or funcion_objetivo is None:
             return
         if self.tipo == "Binario":
             numero_variables = len(funcion_objetivo)
@@ -238,8 +242,10 @@ class MainWindow(QMainWindow):
         else: 
             arbol_ramificacion = Arbol(Nodo(funcion_objetivo , restricciones, self.modo, self.tipo))
         
-        solucion = arbol_ramificacion.recorrer_2()
-        solucion.show(line_type="ascii-em")
+
+        arbol_ramificacion.recorrer_4()
+        # solucion = arbol_ramificacion.recorrer_2()
+        # solucion.show(line_type="ascii-em")
         # arbol_ramificacion.representar()
 
 

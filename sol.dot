@@ -1,0 +1,56 @@
+strict digraph G {
+	graph [bb="0,0,929.77,854.86",
+		rankdir=TB
+	];
+	node [label="\N"];
+	"Solución Inicial\n\nVariables"	[height=3.1623,
+		label="Solución Inicial\n\nVariables: \nX1 = 5.333333333333333\nX2 = 2\nX3 = 3.333333333333333\n\nZ: 29.0",
+		pos="113.84,736.77",
+		shape=circle,
+		width=3.1623];
+	"fin ramificacion10"	[height=1.9859,
+		label="fin ramificacion1",
+		pos="255.84,490.76",
+		shape=circle,
+		width=1.9859];
+	"Solución Inicial\n\nVariables: \nX1 = 5.333333333333333\nX2 = 2\nX3 = 3.333333333333333\n\nZ: 29.00"	[height=2.5534,
+		pos="359.84,736.77",
+		width=3.1623];
+	"Solución Inicial\n\nVariables: \nX1 = 5.333333333333333\nX2 = 2\nX3 = 3.333333333333333\n\nZ: 29.00" -> "fin ramificacion10"	[pos="e,283.61,556.9 323.03,649.4 311.63,622.65 299.16,593.39 288.09,567.43"];
+	"X1 <= [5]\n\nVariables: \nX1 = 5\nX2 = 2.857142857142857\nX3 = 3.2857142857142856\n\nZ: 27.7142857142857150"	[height=2.5534,
+		pos="463.84,490.76",
+		width=3.2802];
+	"Solución Inicial\n\nVariables: \nX1 = 5.333333333333333\nX2 = 2\nX3 = 3.333333333333333\n\nZ: 29.00" -> "X1 <= [5]\n\nVariables: \nX1 = 5\nX2 = 2.857142857142857\nX3 = 3.2857142857142856\n\nZ: 27.7142857142857150"	[pos="e,426.91,578.43 396.66,649.4 405.02,629.78 413.95,608.82 422.48,588.8"];
+	"X1 <= [5]\n\nVariables"	[height=3.2802,
+		label="X1 <= [5]\n\nVariables: \nX1 = 5\nX2 = 2.857142857142857\nX3 = 3.2857142857142856\n\nZ: 27.714285714285715",
+		pos="609.84,736.77",
+		shape=circle,
+		width=3.2802];
+	"fin ramificacion20"	[height=1.9859,
+		label="fin ramificacion2",
+		pos="391.84,270.91",
+		shape=circle,
+		width=1.9859];
+	"X1 <= [5]\n\nVariables: \nX1 = 5\nX2 = 2.857142857142857\nX3 = 3.2857142857142856\n\nZ: 27.7142857142857150" -> "fin ramificacion20"	[pos="e,414.1,339.25 434.66,401.47 429.03,384.44 423.18,366.71 417.66,350.03"];
+	"X2 <= [2]\n\nVariables: \nX1 = 5\nX2 = 2\nX3 = 2\n\nZ: 23.00"	[height=2.5534,
+		pos="534.84,270.91",
+		width=1.4731];
+	"X1 <= [5]\n\nVariables: \nX1 = 5\nX2 = 2.857142857142857\nX3 = 3.2857142857142856\n\nZ: 27.7142857142857150" -> "X2 <= [2]\n\nVariables: \nX1 = 5\nX2 = 2\nX3 = 2\n\nZ: 23.00"	[pos="e,508.89,351.55 492.62,401.47 496.82,388.57 501.16,375.27 505.38,362.32"];
+	"X2 <= [2]\n\nVariables"	[height=2.5534,
+		label="X2 <= [2]\n\nVariables: \nX1 = 5\nX2 = 2\nX3 = 2\n\nZ: 23.0",
+		pos="837.84,736.77",
+		shape=circle,
+		width=2.5534];
+	"fin ramificacion30"	[height=1.9859,
+		label="fin ramificacion3",
+		pos="453.84,71.494",
+		shape=circle,
+		width=1.9859];
+	"X2 <= [2]\n\nVariables: \nX1 = 5\nX2 = 2\nX3 = 2\n\nZ: 23.00" -> "fin ramificacion30"	[pos="e,480.79,138.17 504.22,195.28 497.96,180.02 491.36,163.94 485.08,148.63"];
+	"fin ramificacion40"	[height=1.9859,
+		label="fin ramificacion4",
+		pos="614.84,71.494",
+		shape=circle,
+		width=1.9859];
+	"X2 <= [2]\n\nVariables: \nX1 = 5\nX2 = 2\nX3 = 2\n\nZ: 23.00" -> "fin ramificacion40"	[pos="e,588.17,138.31 565.2,194.99 571.34,179.84 577.81,163.89 583.97,148.69"];
+}

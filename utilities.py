@@ -141,7 +141,7 @@ def is_approx_integer(float_number, tolerance=1e-6):
 
 
 class Nodo:
-    def __init__(self, funcion_objetivo, restricciones:dict, modo, tipo, variables_continuas:list | None = None) -> None:
+    def __init__(self, funcion_objetivo, restricciones:dict, modo, tipo, variables_continuas:list | None = None, tag: str | None = None) -> None:
         self.parent: Nodo = None
         self.right: Nodo or None = None
         self.left: Nodo or None = None
@@ -151,6 +151,10 @@ class Nodo:
         self.modo = modo
         self.tipo = tipo
         self.variables_continuas = variables_continuas
+        if not tag:
+            self.tag = "Solución Inicial"
+        else:
+            self.tag = tag
         
         if len(self.restricciones["igualdades"]) > 0:
             self.solucion: OptimizeResult = linprog(self.funcion_objetivo,
@@ -165,41 +169,64 @@ class Nodo:
            
         if self.tipo == "Entero":
             self.ramificar = staticmethod(self.ramificar_entero)
+            self.solucion_factible = staticmethod(self.solucion_entera)
         elif self.tipo == "Binario":
             self.ramificar = staticmethod(self.ramificar_binario)
+            self.solucion_factible = staticmethod(self.solucion_binaria)
         elif self.tipo == "Mixto":
-            print("si entra")
             self.ramificar = staticmethod(self.ramificar_mixto)
+            self.solucion_factible = staticmethod(self.solucion_mixta)
 
 
     def __str__(self) -> str:
-        resultado = f"Variables: \n"
+        resultado = f"{self.tag}\n\nVariables: \n"
         try:
             for index, variable in enumerate(self.solucion.x, start=1):
                 if is_approx_integer(variable, tolerance=1e-8):
-                    resultado += f"x{subscript(f'{index}')} = {int(variable)}\n"
+                    resultado += f"X{index} = {int(variable)}\n"
                 else:
-                    resultado += f"x{subscript(f'{index}')} = {variable}\n"
+                    resultado += f"X{index} = {variable}\n"
             if self.modo == "Maximizar":
                 resultado += f"\nZ: {abs(self.solucion.fun)}"
             else:
                 resultado += f"\nZ: {self.solucion.fun}"
+
+            if self.solucion_factible():
+                resultado += "\nZcota"
         except TypeError:
             return "Solución no factible \nRamificación terminada"
         return resultado
     
+
+    def solucion_entera(self) -> bool:
+        for variable in self.solucion.x:
+            if not is_approx_integer(variable):
+                return False
+        return True
+
+
+    def solucion_binaria(self) -> bool:
+        for variable in self.solucion.x:
+            if variable != 1 and variable != 0:
+                return False
+        return True
+    
+
+    def solucion_mixta(self) -> bool:
+        for index, variable in enumerate(self.solucion.x):
+            if not is_approx_integer(variable) and (index not in self.variables_continuas):
+                return False
+        return True
+
+
     def ramificar_binario(self):
         print("entra a ramificar binario")
         print(self.restricciones)
         print(self.modo)
         print(self.tipo)
-        restricciones_cumplen = True
-        for variable in self.solucion.x:
-            if variable != 1 and variable != 0:
-                restricciones_cumplen = False
-        if restricciones_cumplen:
-            return
         
+        if self.solucion_binaria(self.solucion.x):
+            return        
         # print(f"{self.solucion.x} aún tiene reales que deberían ser enteros")
 
         if self.parent is not None:    
@@ -218,6 +245,7 @@ class Nodo:
                 continue
             else:
                 # Parte derecha
+                tag_derecha = f"X{(indice + 1)} = 1"
                 restricciones_derecha = deepcopy(self.restricciones)
                 nueva_restriccion_derecha = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_derecha[indice] = 1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -234,6 +262,7 @@ class Nodo:
                                                                     (restricciones_derecha["objetivo_igualdades"],np.array([1.0])), axis=0)
                 
                 # Parte Izquierda
+                tag_izquierda = f"X{(indice + 1)} = 0"
                 restricciones_izquierda = deepcopy(self.restricciones)
                 nueva_restriccion_izquierda = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_izquierda[indice] = 1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -250,12 +279,12 @@ class Nodo:
                                                                     (restricciones_izquierda["objetivo_igualdades"],np.array([0.0])), axis=0)
                 print(f"Restricciones izquierda:\n{restricciones_izquierda}\n\nRestricciones derecha:\n{restricciones_derecha}")
 
-                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo)
+                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo, tag=tag_derecha)
                 self.right.parent = self
                 if self.right.solucion.x is None:
                     self.right = None
 
-                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo)
+                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo, tag=tag_izquierda)
                 self.left.parent = self
                 if self.left.solucion.x is None:
                     self.left = None
@@ -266,12 +295,9 @@ class Nodo:
         self.right = None
 
     def ramificar_mixto(self):
-        restricciones_cumplen = True
+        
         print(self.variables_continuas)
-        for index, variable in enumerate(self.solucion.x):
-            if not is_approx_integer(variable) and (index in self.variables_continuas):
-                restricciones_cumplen = False
-        if restricciones_cumplen:
+        if self.solucion_mixta():
             return
         
         # print(f"{self.solucion.x} aún tienen reales en la solución")
@@ -288,8 +314,9 @@ class Nodo:
             
         for indice, variable in enumerate(self.solucion.x):
 
-            if not is_approx_integer(variable) and (indice in self.variables_continuas):
+            if not is_approx_integer(variable) and (indice not in self.variables_continuas):
                 # Parte derecha
+                tag_derecha = f"X{(indice + 1)} >= {[ceil(variable)]}"
                 restricciones_derecha = deepcopy(self.restricciones)
                 nueva_restriccion_derecha = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_derecha[indice] = -1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -301,6 +328,7 @@ class Nodo:
                                                             , axis=0)
                 
                 # Parte Izquierda
+                tag_izquierda = f"X{(indice + 1)} <= {[floor(variable)]}"
                 restricciones_izquierda = deepcopy(self.restricciones)
                 nueva_restriccion_izquierda = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_izquierda[indice] = 1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -311,12 +339,12 @@ class Nodo:
                                                             (restricciones_izquierda["objetivo_desigualdades"],np.array([floor(variable)]))
                                                             , axis=0)
 
-                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo, self.variables_continuas)
+                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo, self.variables_continuas, tag=tag_derecha)
                 self.right.parent = self
                 if self.right.solucion.x is None:
                     self.right = None
 
-                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo, self.variables_continuas)
+                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo, self.variables_continuas, tag=tag_izquierda)
                 self.left.parent = self
                 if self.left.solucion.x is None:
                     self.left = None
@@ -330,11 +358,7 @@ class Nodo:
 
     
     def ramificar_entero(self):
-        restricciones_cumplen = True
-        for variable in self.solucion.x:
-            if not is_approx_integer(variable):
-                restricciones_cumplen = False
-        if restricciones_cumplen:
+        if self.solucion_entera():
             return
         
         # print(f"{self.solucion.x} aún tienen reales en la solución")
@@ -355,6 +379,7 @@ class Nodo:
                 continue
             else:
                 # Parte derecha
+                tag_derecha = f"X{(indice + 1)} >= {[ceil(variable)]}"
                 restricciones_derecha = deepcopy(self.restricciones)
                 nueva_restriccion_derecha = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_derecha[indice] = -1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -366,6 +391,7 @@ class Nodo:
                                                             , axis=0)
                 
                 # Parte Izquierda
+                tag_izquierda = f"X{(indice + 1)} <= {[floor(variable)]}"
                 restricciones_izquierda = deepcopy(self.restricciones)
                 nueva_restriccion_izquierda = np.zeros(len(self.funcion_objetivo))
                 nueva_restriccion_izquierda[indice] = 1.0 #[0.0, 0.0, ..., 1.0, 0.0, ..., 0.0]
@@ -376,12 +402,12 @@ class Nodo:
                                                             (restricciones_izquierda["objetivo_desigualdades"],np.array([floor(variable)]))
                                                             , axis=0)
 
-                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo)
+                self.right = Nodo(self.funcion_objetivo, restricciones_derecha, self.modo, self.tipo, tag=tag_derecha)
                 self.right.parent = self
                 if self.right.solucion.x is None:
                     self.right = None
 
-                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo)
+                self.left = Nodo(self.funcion_objetivo, restricciones_izquierda, self.modo, self.tipo, tag=tag_izquierda)
                 self.left.parent = self
                 if self.left.solucion.x is None:
                     self.left = None
@@ -428,7 +454,7 @@ class Arbol:
 
         while not cola_nodos.empty():
             nodo_actual: Nodo = cola_nodos.get()
-
+                
             if nodo_actual.right is not None:
                 orden_nodos.append(nodo_actual.right)
                 cola_nodos.put(nodo_actual.right)
@@ -457,9 +483,9 @@ class Arbol:
         while not cola_nodos.empty():
             nodo_actual: Nodo = cola_nodos.get()
             if nodo_actual.parent is None:
-                prueba.create_node(f"{nodo_actual.solucion.x}", nodo_actual)
+                prueba.create_node(f"{nodo_actual.solucion.x}, Z = {nodo_actual.solucion.fun} {nodo_actual.tag}", nodo_actual)
             else:
-                prueba.create_node(f"{nodo_actual.solucion.x}", nodo_actual, parent=nodo_actual.parent)
+                prueba.create_node(f"{nodo_actual.solucion.x}Z = {nodo_actual.solucion.fun} {nodo_actual.tag}", nodo_actual, parent=nodo_actual.parent)
 
             if nodo_actual.left is not None:
                 cola_nodos.put(nodo_actual.left)
@@ -473,9 +499,103 @@ class Arbol:
                 prueba.create_node(f"termina_ramificacion_{cont}", parent=nodo_actual)
                 cont += 1
                 
-            
-
         return prueba
+
+    def recorrer_3(self):
+        from bigtree import Node, print_tree, tree_to_dot
+        cont = 1
+        cola_nodos: Queue = Queue()
+        data_dict = {}
+        orden = []
+        raiz: Node
+
+        if self.raiz is not None:
+            cola_nodos.put(self.raiz)
+
+        while not cola_nodos.empty():
+            nodo_actual: Nodo = cola_nodos.get()
+            
+            if nodo_actual.parent is None:
+                raiz = Node(f"{nodo_actual.tag}", data=f"{nodo_actual.solucion.x}, Z = {nodo_actual.solucion.fun} (Solución Inicial)")
+                data_dict[nodo_actual.tag] = raiz
+            else:
+                nodo_temp = Node(f"{nodo_actual.tag}", data=f"{nodo_actual.solucion.x}, Z = {nodo_actual.solucion.fun}", parent=data_dict[nodo_actual.parent.tag])
+                data_dict[nodo_actual.tag] = deepcopy(nodo_temp)
+
+            if nodo_actual.left is not None:
+                cola_nodos.put(nodo_actual.left)
+            else:
+                nodo_temp = Node(f"Termina ramificacion{cont}", data=f"Sin solucion", parent=data_dict[(nodo_actual.tag)])
+                data_dict[f"Termina ramificacion{cont}"] = deepcopy(nodo_temp)
+                cont += 1
+            
+            if nodo_actual.right is not None:
+                cola_nodos.put(nodo_actual.right)
+            else:
+                nodo_temp = Node(f"Termina ramificacion{cont}", data=f"Sin solucion", parent=data_dict[(nodo_actual.tag)])
+                data_dict[f"Termina ramificacion{cont}"] = deepcopy(nodo_temp)
+                cont += 1
+        print(data_dict)
+        print_tree(raiz, attr_list=["data"])
+        representacion = tree_to_dot(raiz)
+        representacion.write_png("sol.png")
+        representacion.write_dot("sol.dot")
+
+    
+    def recorrer_4(self):
+        from bigtree import dataframe_to_tree_by_relation, print_tree, tree_to_dot
+        import pandas as pd
+        import pydot as pdt
+        cola_nodos: Queue = Queue()
+        tree_relation = []
+        cont = 1
+        if self.raiz is not None:
+            cola_nodos.put(self.raiz)
+
+        while not cola_nodos.empty():
+            nodo_actual: Nodo = cola_nodos.get()
+            
+            # Nodo actual
+            if nodo_actual.parent is None:
+                tree_relation.append([str(nodo_actual), None, ""])
+            else:
+                tree_relation.append([str(nodo_actual), f"{nodo_actual.parent}", ""])
+            
+            # Hijos nodo actual
+            if nodo_actual.left is not None:
+                cola_nodos.put(nodo_actual.left)
+            else:
+                tree_relation.append([f"fin ramificacion{cont}", str(nodo_actual), ""])
+                cont += 1
+            
+            if nodo_actual.right is not None:
+                cola_nodos.put(nodo_actual.right)
+            else:
+                tree_relation.append([f"fin ramificacion{cont}", str(nodo_actual), ""])
+                cont += 1
+        
+        datos_arbol = pd.DataFrame(tree_relation, columns=["child", "parent", "data"])
+        # print(datos_arbol)
+        arbol = dataframe_to_tree_by_relation(datos_arbol, child_col="child", parent_col="parent")
+        print_tree(arbol)
+        representacion = tree_to_dot(arbol, node_shape="circle", node_colour="white")
+        dot_string = representacion.to_string()
+        # print(dot_string)
+        new_dot = ""
+        for line in dot_string.splitlines():
+            
+            if ("fillcolor" in line) and "ramificacion" not in line:
+                continue
+            else:
+                if "Zcota0" in line:
+                    line = line.replace("Zcota0", "Zcota")
+                new_dot += f"{line}\n"
+
+        # print(new_dot)
+        representacion = pdt.graph_from_dot_data(new_dot)[0]
+        representacion.write_png("solución.png")
+        # representacion.write_dot("sol.dot")
+
 
     def representar(self):
         nodos: List[Nodo] = self.recorrer()
@@ -491,3 +611,4 @@ class Arbol:
         from PIL import Image
         img = Image.open(f"tree.png")
         img.show()
+
