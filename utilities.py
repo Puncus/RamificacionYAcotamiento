@@ -3,7 +3,6 @@ from typing import List, Tuple
 import numpy as np
 from queue import Queue
 from scipy.optimize import linprog, OptimizeResult
-from dsplot.tree import BinaryTree
 from copy import deepcopy
 
 
@@ -225,7 +224,7 @@ class Nodo:
         print(self.modo)
         print(self.tipo)
         
-        if self.solucion_binaria(self.solucion.x):
+        if self.solucion_binaria():
             return        
         # print(f"{self.solucion.x} aún tiene reales que deberían ser enteros")
 
@@ -511,6 +510,7 @@ class Arbol:
 
         if self.raiz is not None:
             cola_nodos.put(self.raiz)
+            modo = self.raiz.modo
 
         while not cola_nodos.empty():
             nodo_actual: Nodo = cola_nodos.get()
@@ -546,11 +546,13 @@ class Arbol:
         from bigtree import dataframe_to_tree_by_relation, print_tree, tree_to_dot
         import pandas as pd
         import pydot as pdt
+        optimos = []
         cola_nodos: Queue = Queue()
         tree_relation = []
         cont = 1
         if self.raiz is not None:
             cola_nodos.put(self.raiz)
+            modo = self.raiz.modo
 
         while not cola_nodos.empty():
             nodo_actual: Nodo = cola_nodos.get()
@@ -558,8 +560,12 @@ class Arbol:
             # Nodo actual
             if nodo_actual.parent is None:
                 tree_relation.append([str(nodo_actual), None, ""])
+                if nodo_actual.solucion_factible():
+                    optimos.append(abs(nodo_actual.solucion.fun))
             else:
                 tree_relation.append([str(nodo_actual), f"{nodo_actual.parent}", ""])
+                if nodo_actual.solucion_factible():
+                    optimos.append(abs(nodo_actual.solucion.fun))
             
             # Hijos nodo actual
             if nodo_actual.left is not None:
@@ -574,6 +580,10 @@ class Arbol:
                 tree_relation.append([f"fin ramificacion{cont}", str(nodo_actual), ""])
                 cont += 1
         
+        if modo == "Maximizar":
+            optimo = max(optimos)
+        else:
+            optimo = min(optimos)
         datos_arbol = pd.DataFrame(tree_relation, columns=["child", "parent", "data"])
         # print(datos_arbol)
         arbol = dataframe_to_tree_by_relation(datos_arbol, child_col="child", parent_col="parent")
@@ -584,16 +594,18 @@ class Arbol:
         new_dot = ""
         for line in dot_string.splitlines():
             
-            if ("fillcolor" in line) and "ramificacion" not in line:
+            if ("fillcolor" in line) and ("ramificacion" not in line) and f"Z: {optimo}" not in line:
+                continue
+            if "fin ramificacion" in line:
                 continue
             else:
                 if "Zcota0" in line:
-                    line = line.replace("Zcota0", "Zcota")
+                    line = line.replace("Zcota0", "Problema agotado")
                 new_dot += f"{line}\n"
 
         # print(new_dot)
         representacion = pdt.graph_from_dot_data(new_dot)[0]
-        representacion.write_png("solución.png")
+        representacion.write_png("solucion.png")
         # representacion.write_dot("sol.dot")
 
 

@@ -247,7 +247,9 @@ class MainWindow(QMainWindow):
         # solucion = arbol_ramificacion.recorrer_2()
         # solucion.show(line_type="ascii-em")
         # arbol_ramificacion.representar()
-
+        from PIL import Image
+        imagen = Image.open("solucion.png")
+        imagen.show()
 
 # You need one (and only one) QApplication instance per application.
 # Pass in sys.argv to allow command line arguments for your app.
